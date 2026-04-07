@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Discord Profile</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #2f3136;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* Card */
+.card {
+  width: 360px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #232428;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+
+/* Banner */
+.banner {
+  height: 100px;
+  background: linear-gradient(135deg, #5865F2, #eb459e);
+}
+
+/* Avatar wrapper */
+.avatar-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin-left: 15px;
+  margin-top: -45px;
+}
+
+/* Avatar */
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid #232428;
+  display: block;
+}
+
+/* Nitro badge */
+.nitro {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
+}
+
+/* Content */
+.content {
+  padding: 15px;
+}
+
+.username {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.tag {
+  color: #b5bac1;
+  font-size: 14px;
+}
+
+.status {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #b5bac1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Lanyard live card */
+.lanyard {
+  margin-top: 12px;
+}
+
+.lanyard img {
+  width: 100%;
+  border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="banner"></div>
+
+  <div class="avatar-container">
+    <img class="avatar" id="avatar">
+    <!-- Realistic Discord Nitro Badge -->
+    <img class="nitro" src="https://cdn.jsdelivr.net/gh/DiscordUserIcons/Discord-Nitro-Badge/NitroBadge.png">
+  </div>
+
+  <div class="content">
+    <div class="username" id="username">Loading...</div>
+    <div class="tag" id="tag"></div>
+
+    <div class="status" id="status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="activity-text">Loading activity...</span>
+    </div>
+
+    <div class="lanyard">
+      <a href="https://discord.com/users/1370394029665030295" target="_blank">
+        <img src="https://lanyard.cnrad.dev/api/1370394029665030295?theme=dark&borderRadius=10px&bg=232428">
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+const userId = "1370394029665030295";
+
+async function loadProfile() {
+  try {
+    const res = await fetch(`https://api.lanyard.rest/v1/users/${userId}`);
+    const data = await res.json();
+
+    if(!data.success){
+      document.getElementById("username").innerText = "User not monitored";
+      return;
+    }
+
+    const user = data.data.discord_user;
+    const discordStatus = data.data.discord_status;
+    const activities = data.data.activities || [];
+
+    // Avatar
+    document.getElementById("avatar").src =
+      `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+
+    // Username and tag
+    document.getElementById("username").innerText = user.username;
+    document.getElementById("tag").innerText = "#" + user.discriminator;
+
+    // Status dot color
+    const statusDot = document.getElementById("status-dot");
+    let color = "#747f8d"; // offline default
+    if(discordStatus === "online") color = "#43b581";
+    else if(discordStatus === "idle") color = "#faa61a";
+    else if(discordStatus === "dnd") color = "#f04747";
+    statusDot.style.backgroundColor = color;
+
+    // Show first activity (like Spotify / Game)
+    let activityText = "No activity";
+    if(activities.length > 0){
+      const act = activities[0];
+      if(act.type === 0) activityText = "Playing " + act.name;
+      else if(act.type === 2) activityText = "Listening to " + act.name;
+      else activityText = act.name;
+    }
+    document.getElementById("activity-text").innerText = activityText;
+
+  } catch(err){
+    console.error(err);
+    document.getElementById("username").innerText = "Failed to load";
+    document.getElementById("activity-text").innerText = "";
+  }
+}
+
+// Update every 10 seconds
+loadProfile();
+setInterval(loadProfile, 10000);
+</script>
+
+</body>
+</html>
